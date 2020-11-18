@@ -669,10 +669,7 @@ class Agent(AgentT, Service):
         _current_agent.set(self)
         try:
             await coro
-        except asyncio.CancelledError:
-            if self.should_stop:
-                raise
-        except Exception as exc:
+        except BaseException as exc:
             if self._on_error is not None:
                 await self._on_error(self, exc)
 
