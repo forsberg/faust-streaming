@@ -95,6 +95,7 @@ cdef class StreamIterator:
                 value = await self.on_merge(value)
             except Skip:
                 value = self._skipped_value
+        print(f"streams.pyx, value: {value}")
         return value, sensor_state
 
     cpdef object after(self, object event, object do_ack, object sensor_state):
@@ -104,6 +105,7 @@ cdef class StreamIterator:
             object tp
             object offset
             object consumer
+        print(f"streams.pyx: after do_ack: {do_ack} event: {event} offset: {event.message.offset} {event.message.acked} {event.message.refcount}")
         consumer = self.consumer
         last_stream_to_ack = False
         if do_ack and event is not None:
@@ -118,6 +120,7 @@ cdef class StreamIterator:
                     message.acked = True
                     tp = message.tp
                     offset = message.offset
+                    print(f"acked {event} tp: {tp} offset: {message.offset} acks_enabled: {self.acks_enabled_for(message.topic)}")
                     if self.acks_enabled_for(message.topic):
                         committed = consumer._committed_offset[tp]
                         try:

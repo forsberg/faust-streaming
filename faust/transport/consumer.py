@@ -913,6 +913,7 @@ class Consumer(Service, ConsumerT):
 
     def _filter_committable_offsets(self, tps: Iterable[TP]) -> Dict[TP, int]:
         commit_offsets = {}
+        self.log.dev("+_filter_committable_offsets")
         for tp in tps:
             # Find the latest offset we can commit in this tp
             offset = self._new_offset(tp)
@@ -983,6 +984,7 @@ class Consumer(Service, ConsumerT):
                 on_timeout.info("-tables.on_commit")
         self._committed_offset.update(committable_offsets)
         self.app.monitor.on_tp_commit(committable_offsets)
+        self.log.dev(f"Did commit: {did_commit}")
         return did_commit
 
     def _filter_tps_with_pending_acks(
@@ -1002,6 +1004,13 @@ class Consumer(Service, ConsumerT):
         # get the new offset for this tp, by going through
         # its list of acked messages.
         acked = self._acked[tp]
+
+        self.log.dev(" ")
+        self.log.dev(f"acked for {tp}: {acked}")
+        self.log.dev(f"acked_index for {tp}: {self._acked_index[tp]}")
+        self.log.dev(f"self._gap for {tp}: {self._gap[tp]}")
+        
+        len_acked = len(acked)
 
         # We iterate over it until we find a gap
         # then return the offset before that.
@@ -1024,13 +1033,21 @@ class Consumer(Service, ConsumerT):
                 acked.extend(gaps)
                 gap_for_tp[:gap_index] = []
             acked.sort()
+            
+            unique = sorted(set(acked))
+
             # Note: acked is always kept sorted.
             # find first list of consecutive numbers
             batch = next(consecutive_numbers(acked))
             # remove them from the list to clean up.
             acked[: len(batch) - 1] = []
             self._acked_index[tp].difference_update(batch)
+            
+            self.log.dev(f"batch: {batch}")
             # return the highest commit offset
+            offset_diff = max_offset - (batch[-1] + 1)
+            if offset_diff != -1:
+                self.log.dev(f"-_new_offset[{tp.partition}] len(acked) pre/now: {len_acked}/{len(acked)} {batch[-1] + 1} max: {max_offset}, diff: {offset_diff}")
             return batch[-1] + 1
         return None
 
