@@ -404,7 +404,10 @@ class Recovery(Service):
                         if (
                             active_offsets[tp]
                             and active_highwaters[tp]
-                            and active_offsets[tp] > active_highwaters[tp]
+                            # We store the offset -1 in highwaters, but
+                            # active_offsets contains the real offsets as
+                            # reported by Kafka Consumer. Hence, the -1
+                            and active_offsets[tp] - 1 > active_highwaters[tp]
                         ):
                             raise ConsistencyError(
                                 E_PERSISTED_OFFSET.format(
