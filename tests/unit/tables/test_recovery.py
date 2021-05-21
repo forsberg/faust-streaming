@@ -230,8 +230,8 @@ class TestRecovery:
         assert dest == Counter(
             {
                 TP1: 300,
-                TP2: 200,
-                TP3: 3002,
+                TP2: 201,
+                TP3: 3003,
             }
         )
 
